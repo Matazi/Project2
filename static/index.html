@@ -85,14 +85,103 @@ function updateVolcano(data) {
            .join("circle")
            .attr("class","datapoint")
            .attr("fill", "orange")
+           .attr("opacity", .7)
            .attr("r", 2)
            .attr("cx", d => d.position[0])
            .attr("cy", d => d.position[1]);
 }
 updateVolcano(volcanos);
+
+let toolTipWidth = 150;
+let toolTipHeight = 150;
+
+let toolTip = map.append("g")
+                 .attr("class","tooltip")
+                 .attr("visibility","hiden");
+
+let countryTxt = toolTip.append("text")
+                 .attr("text-anchor", "middle")
+                 .attr("alignment-baseline","hanging")
+                 .attr("x",0)
+                 .attr("y",-25)
+                 .style("fill", "Black")
+                 .style("font-size", "12px");
+let elevationTxt = toolTip.append("text")
+                .attr("text-anchor", "middle")
+                .attr("alignment-baseline","hanging")
+                .attr("x",0)
+                .attr("y",-40)
+                .style("fill", "Black")
+                .style("font-size", "12px");
+let eruptionTxt = toolTip.append("text")
+                 .attr("text-anchor", "middle")
+                 .attr("alignment-baseline","hanging")
+                 .attr("x",0)
+                 .attr("y",-55)
+                 .style("fill", "Black")
+                 .style("font-size", "12px");
+let km5Txt = toolTip.append("text")
+                .attr("text-anchor", "middle")
+                .attr("alignment-baseline","hanging")
+                .attr("x",0)
+                .attr("y",-70)
+                .style("fill", "Black")
+                .style("font-size", "12px");
+let nameTxt = toolTip.append("text")
+                .attr("text-anchor", "middle")
+                .attr("alignment-baseline","hanging")
+                .attr("x",0)
+                .attr("y",-85)
+                .style("fill", "Black")
+                .style("font-size", "12px");
+
+d3.selectAll("circle").on("mouseenter",mouseEntersPlot);
+d3.selectAll("circle").on("mouseout",mouseLeavesPlot);
+
+function mouseEntersPlot(){
+  let volcano = d3.select(this);
+  console.log(volcano.datum());
+  volcano.attr("stroke", "black")
+         .attr('r',5)
+         .attr("stroke-width", 2);
+
+  countryTxt.text("Country: " + volcano.datum().country);
+  elevationTxt.text("Elevation: " + volcano.datum().elevation) + " meters";
+  eruptionTxt.text("Last Erruption(AD): " + volcano.datum().last_eruption_year);
+  km5Txt.text("Pop within 5km: " + volcano.datum().population_within_5_km);
+  nameTxt.text("Volcano Name: " + volcano.datum().volcano_name);
+
+  toolTip.style("visibility","visible");
+
+  let xPos = volcano.attr("cx");
+  let yPos = volcano.attr("cy");
+
+  toolTip.attr("transform",`translate(${xPos},${yPos})`);
+}
+
+function mouseLeavesPlot(){
+  toolTip.style("visibility","hidden");
+  let volcano = d3.select(this);
+  volcano.attr('r',2)
+         .attr("stroke-width",0);
+}
+
+/*
+country: "Cape Verde"
+elevation: "2829"
+last_eruption_year: "2015"
+latitude: "14.95"
+longitude: "-24.35"
+population_within_5_km: "189"
+population_within_10_km: "13254"
+population_within_30_km: "37650"
+population_within_100_km: "267298"
+*/
+
 };
 
-requestData()
+
+requestData();
 </script>
 
 </body>
