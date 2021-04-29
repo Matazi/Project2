@@ -31,7 +31,8 @@
 <svg id="worldmap" height="800" width="1200" style="background:#ffffff; margin-top:50px "  >
 
 </svg>
-
+<div id="controls">
+</div>
 <script id="map">
 
 const svg = d3.select("#worldmap");
@@ -47,9 +48,9 @@ const requestData = async function() {
 
   // const world = await d3.json("datasets/countries-50m.json");
   const world = await d3.json("/map");
-  const volcanos = await d3.json("/volcanos")
+  var volcanos = await d3.json("/volcanos")
   const events = await d3.json("/events")
-  const eruptions = await d3.json("/eruptions")
+  var eruptions = await d3.json("/volcanos")
   console.log(world)
   console.log(volcanos)
   console.log(events)
@@ -89,7 +90,48 @@ function updateVolcano(data) {
            .attr("cx", d => d.position[0])
            .attr("cy", d => d.position[1]);
 }
-updateVolcano(volcanos);
+updateVolcano(eruptions);
+
+
+let controls = d3.select("#controls")
+
+pop30km = controls.append("div")
+pop30km.append("p").text("population_within_30_km")
+     .append("input")
+     .attr("type","number")
+     .attr("class","pop30km")
+     .attr("param","pop30km");
+
+eruption_category = controls.append("div")
+eruption_category.append("p").text("Category")
+     .append("input")
+     .attr("type","text")
+     .attr("class","erCat")
+     .attr("param","erCat");
+
+
+let button = controls.append("div")
+       .append("button")
+       .text("Update")
+       .on("click", function() {
+
+         let target = new URL("/volcanos", document.location);
+         // let target2 = new URL("/eruptions", document.location);
+         controls.selectAll("input").each( function() {
+
+           let key = d3.select(this).attr("param");
+           let txt = d3.select(this).property("value");
+           if (txt.length > 0) {
+             target.searchParams.append(key, txt)
+           }
+         });
+         d3.json(target).then( data => {
+           volcanos = data;
+           updateVolcano(data);
+
+         } );
+
+       });
 };
 
 requestData()
