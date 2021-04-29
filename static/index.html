@@ -1,4 +1,8 @@
-<html><head>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>INFO 3300 Project 2</title>
   <script src="https://d3js.org/d3.v6.min.js"></script>
   <script src="https://d3js.org/topojson.v2.min.js"></script>
 
@@ -23,7 +27,7 @@
 
 </head>
 <body>
-
+<p> Hello! </p>
 <svg id="worldmap" height="800" width="1200" style="background:#ffffff; margin-top:50px "  >
 
 </svg>
@@ -41,8 +45,16 @@ const map = svg.append("g")
 
 const requestData = async function() {
 
-  const world = await d3.json("datasets/countries-50m.json");
+  // const world = await d3.json("datasets/countries-50m.json");
+  const world = await d3.json("/map");
+  const volcanos = await d3.json("/volcanos")
+  const events = await d3.json("/events")
+  const eruptions = await d3.json("/eruptions")
   console.log(world)
+  console.log(volcanos)
+  console.log(events)
+  console.log(eruptions)
+
 
 var countries = topojson.feature(world, world.objects.countries);
 var countriesMesh = topojson.mesh(world, world.objects.countries);
@@ -64,6 +76,20 @@ map.append("path").datum(countriesMesh)
    .attr("d", path);
 
 
+function updateVolcano(data) {
+
+  data.forEach( d => {
+          d.position = projection([d.longitude, d.latitude]);
+        });
+  map.selectAll("circle.datapoint").data(data)
+           .join("circle")
+           .attr("class","datapoint")
+           .attr("fill", "orange")
+           .attr("r", 2)
+           .attr("cx", d => d.position[0])
+           .attr("cy", d => d.position[1]);
+}
+updateVolcano(volcanos);
 };
 
 requestData()
