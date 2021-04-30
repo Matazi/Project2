@@ -50,17 +50,12 @@ const requestData = async function() {
   const volcanos = await d3.json("/volcanos")
   const events = await d3.json("/events")
   const eruptions = await d3.json("/eruptions")
-  console.log(world)
-  console.log(volcanos)
-  console.log(events)
-  console.log(eruptions)
 
 
 var countries = topojson.feature(world, world.objects.countries);
 var countriesMesh = topojson.mesh(world, world.objects.countries);
 var projection = d3.geoNaturalEarth1().fitSize([mapWidth, mapHeight], countries);
 var path = d3.geoPath().projection(projection);
-console.log(countriesMesh)
 
 var graticule = d3.geoGraticule10();
 map.append("path").attr("class", "graticule").attr("d", path(graticule))
@@ -99,64 +94,69 @@ let toolTip = map.append("g")
                  .attr("class","tooltip")
                  .attr("visibility","hiden");
 
+let nameTxt = toolTip.append("text")
+                     .attr("text-anchor", "middle")
+                     .attr("alignment-baseline","hanging")
+                     .attr("x",600)
+                     .attr("y",0)
+                     .style("fill", "darkblue")
+                     .style("font-size", "20px");
 let countryTxt = toolTip.append("text")
                  .attr("text-anchor", "middle")
                  .attr("alignment-baseline","hanging")
-                 .attr("x",0)
-                 .attr("y",-25)
+                 .attr("x",600)
+                 .attr("y",25)
                  .style("fill", "Black")
-                 .style("font-size", "12px");
+                 .style("font-size", "17px")
+                 .style("font-style","italic");
+
 let elevationTxt = toolTip.append("text")
                 .attr("text-anchor", "middle")
                 .attr("alignment-baseline","hanging")
-                .attr("x",0)
-                .attr("y",-40)
-                .style("fill", "Black")
-                .style("font-size", "12px");
+                .attr("x",300)
+                .attr("y",60)
+                .style("fill", "rgb(203, 143, 10)")
+                .style("font-size", "17px");
 let eruptionTxt = toolTip.append("text")
                  .attr("text-anchor", "middle")
                  .attr("alignment-baseline","hanging")
-                 .attr("x",0)
-                 .attr("y",-55)
-                 .style("fill", "Black")
-                 .style("font-size", "12px");
+                 .attr("x",500)
+                 .attr("y",60)
+                 .style("fill", "rgb(203, 143, 10)")
+                 .style("font-size", "17px");
 let km5Txt = toolTip.append("text")
                 .attr("text-anchor", "middle")
                 .attr("alignment-baseline","hanging")
-                .attr("x",0)
-                .attr("y",-70)
-                .style("fill", "Black")
-                .style("font-size", "12px");
-let nameTxt = toolTip.append("text")
+                .attr("x",710)
+                .attr("y",60)
+                .style("fill", "rgb(203, 143, 10)")
+                .style("font-size", "17px");
+let km10Txt = toolTip.append("text")
                 .attr("text-anchor", "middle")
                 .attr("alignment-baseline","hanging")
-                .attr("x",0)
-                .attr("y",-85)
-                .style("fill", "Black")
-                .style("font-size", "12px");
+                .attr("x",910)
+                .attr("y",60)
+                .style("fill", "rgb(203, 143, 10)")
+                .style("font-size", "17px");
+
 
 d3.selectAll("circle").on("mouseenter",mouseEntersPlot);
 d3.selectAll("circle").on("mouseout",mouseLeavesPlot);
 
 function mouseEntersPlot(){
   let volcano = d3.select(this);
-  console.log(volcano.datum());
   volcano.attr("stroke", "black")
          .attr('r',5)
          .attr("stroke-width", 2);
 
-  countryTxt.text("Country: " + volcano.datum().country);
-  elevationTxt.text("Elevation: " + volcano.datum().elevation) + " meters";
+  countryTxt.text(volcano.datum().country);
+  elevationTxt.text("Elevation: " + volcano.datum().elevation + "m");
   eruptionTxt.text("Last Erruption(AD): " + volcano.datum().last_eruption_year);
   km5Txt.text("Pop within 5km: " + volcano.datum().population_within_5_km);
-  nameTxt.text("Volcano Name: " + volcano.datum().volcano_name);
+  km10Txt.text("Pop within 10km: " + volcano.datum().population_within_10_km);
+  nameTxt.text(volcano.datum().volcano_name);
 
   toolTip.style("visibility","visible");
-
-  let xPos = volcano.attr("cx");
-  let yPos = volcano.attr("cy");
-
-  toolTip.attr("transform",`translate(${xPos},${yPos})`);
 }
 
 function mouseLeavesPlot(){
@@ -166,17 +166,6 @@ function mouseLeavesPlot(){
          .attr("stroke-width",0);
 }
 
-/*
-country: "Cape Verde"
-elevation: "2829"
-last_eruption_year: "2015"
-latitude: "14.95"
-longitude: "-24.35"
-population_within_5_km: "189"
-population_within_10_km: "13254"
-population_within_30_km: "37650"
-population_within_100_km: "267298"
-*/
 
 };
 
