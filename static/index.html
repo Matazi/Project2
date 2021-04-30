@@ -32,6 +32,8 @@
 
 </svg>
 
+<div id="scatterLegend" class="legend"> </div>
+
 <script id="map">
 
 const svg = d3.select("#worldmap");
@@ -100,7 +102,7 @@ let nameTxt = toolTip.append("text")
                      .attr("x",600)
                      .attr("y",0)
                      .style("fill", "darkblue")
-                     .style("font-size", "20px");
+                     .style("font-size", "22px");
 let countryTxt = toolTip.append("text")
                  .attr("text-anchor", "middle")
                  .attr("alignment-baseline","hanging")
@@ -165,7 +167,6 @@ function mouseLeavesPlot(){
   volcano.attr('r',2)
          .attr("stroke-width",0);
 }
-
 
 };
 
