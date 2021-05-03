@@ -39,6 +39,8 @@ def volcano():
 
     eruption_category = request.args.get('erCat', None)
 
+    time = request.args.get('time', None, type=float)
+
     vfinal = []
     for v in volcanos.values():
             #Filter criteria
@@ -48,17 +50,20 @@ def volcano():
             #     continue
             # if population_within_10_km is not None:
             #     continue
-            if population_within_30_km is not None and float(v['population_within_30_km']) < population_within_30_km:
+            if population_within_100_km is not None and float(v['population_within_100_km']) < population_within_100_km:
                 continue
-            # if population_within_100_km is not None:
+            # if population_within_30_km is not None:
             #     continue
+            if v['last_eruption_year'] != "Unknown":
+                if time is not None and float(v['last_eruption_year']) > time:
+                    continue
 
             vfinal.append(v)
     # erfinal = []
-    for v in eruptions.values():
-        if eruption_category is not None and v['eruption_category'] == eruption_category:
-            continue
-        vfinal.append(v)
+    # for v in eruptions.values():
+    #     if eruption_category is not None and v['eruption_category'] == eruption_category:
+    #         continue
+    #     vfinal.append(v)
     # return jsonify(erfinal)
     return jsonify(vfinal)
 

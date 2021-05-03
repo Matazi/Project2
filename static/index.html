@@ -31,12 +31,61 @@
     stroke-width: 1.5px;
     fill: none;
   }
+  .ticks {
+  font: 10px sans-serif;
+    }
 
+    .track,
+    .track-inset,
+    .track-overlay {
+      stroke-linecap: round;
+    }
+
+    .track {
+      stroke: #000;
+      stroke-opacity: 0.3;
+      stroke-width: 10px;
+    }
+
+    .track-inset {
+      stroke: #ddd;
+      stroke-width: 8px;
+    }
+
+    .track-overlay {
+      pointer-events: stroke;
+      stroke-width: 50px;
+      stroke: transparent;
+      cursor: crosshair;
+    }
+
+    .handle {
+      fill: #fff;
+      stroke: #000;
+      stroke-opacity: 0.5;
+      stroke-width: 1.25px;
+    }
   </style>
 
 </head>
 <body>
 <p> Hello! </p>
+<div class="labelradio">
+    <p> Population within 100km </p>
+</div>
+<div>
+  <input type="radio" name="pop100km" value=1000> 1,000 <br>
+  <input type="radio" name="pop100km" value=1000000> 100,000 <br>
+  <input type="radio" name="pop100km" value=10000000> 1,000,000 <br>
+  <input type="radio" name="pop100km" value=100000000> 10,000,000 <br>
+
+</div>
+<div>
+<input type="range" id="time" name="time" min=-6000 max=2017 value=10>
+</div>
+
+<div id="controls">
+</div>
 <svg id="rectangle" height="250" width="1800" >
 </svg>
 <svg id="worldmap" height="600" width="1000" style="background:#ffffff; "  >
@@ -107,6 +156,69 @@ function updateVolcano(data) {
            .attr("cy", d => d.position[1]);
 }
 updateVolcano(volcanos);
+
+     d3.selectAll("input[name='pop100km']").on("change", function(){
+         console.log(this.value)
+         let target = new URL("/volcanos", document.location);
+         // let target2 = new URL("/eruptions", document.location);
+
+
+           let key = d3.select(this).attr("name");
+           let txt = d3.select(this).property("value");
+           if (txt.length > 0) {
+             target.searchParams.append(key, txt)
+           }
+         d3.json(target).then( data => {
+           volcanos = data;
+           console.log(volcanos);
+           updateVolcano(data);
+
+         } );
+     });
+
+     d3.select("#time").on("change", function(d){
+       console.log(this.value)
+       selectedValue = this.value
+       let target = new URL("/volcanos", document.location);
+       // let target2 = new URL("/eruptions", document.location);
+
+
+         let key = d3.select(this).attr("name");
+         let txt = d3.select(this).property("value");
+         if (txt.length > 0) {
+           target.searchParams.append(key, txt)
+         }
+       d3.json(target).then( data => {
+         volcanos = data;
+         console.log(volcanos);
+         updateVolcano(data);
+
+       } );
+  });
+  
+// let button = controls.append("div")
+//        .append("button")
+//        .text("Update")
+//        .on("click", function() {
+//
+//          let target = new URL("/volcanos", document.location);
+//          // let target2 = new URL("/eruptions", document.location);
+//          controls.selectAll("input").each( function() {
+//
+//            let key = d3.select(this).attr("param");
+//            let txt = d3.select(this).property("value");
+//            if (txt.length > 0) {
+//              target.searchParams.append(key, txt)
+//            }
+//          });
+//          d3.json(target).then( data => {
+//            volcanos = data;
+//            console.log(volcanos);
+//            updateVolcano(data);
+//
+//          } );
+//
+//        });
 
 var zoom = d3.zoom()
              .scaleExtent([1,10])
