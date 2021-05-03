@@ -5,10 +5,13 @@
   <title>INFO 3300 Project 2</title>
   <script src="https://d3js.org/d3.v6.min.js"></script>
   <script src="https://d3js.org/topojson.v2.min.js"></script>
+  <script src="https://d3js.org/d3-geo-projection.v3.min.js"></script>
+  <script src="https://d3js.org/d3-array.v2.min.js"></script>
+  <script src="https://d3js.org/d3-geo.v2.min.js"></script>
 
   <style>
   .country {
-    fill: #000000;
+    fill: #d3d3d3;
   }
 
   .outline {
@@ -20,7 +23,13 @@
   .graticule {
     fill: none;
     stroke: #d3d3d3;
-    stroke-width: 1px;
+    stroke-width: 0.7px;
+  }
+
+  .sphere {
+    stroke: black;
+    stroke-width: 1.5px;
+    fill: none;
   }
 
   </style>
@@ -28,14 +37,18 @@
 </head>
 <body>
 <p> Hello! </p>
-<svg id="worldmap" height="800" width="1200" style="background:#ffffff; margin-top:50px "  >
+<svg id="rectangle" height="250" width="1800" >
+</svg>
+<svg id="worldmap" height="600" width="1000" style="background:#ffffff; "  >
 
 </svg>
-<div id="controls">
-</div>
+
+<div id="scatterLegend" class="legend"> </div>
+
 <script id="map">
 
 const svg = d3.select("#worldmap");
+const rec = d3.select("#rectangle")
 const width1 = svg.attr("width");
 const height1 = svg.attr("height");
 const margin = { top: 20, right: 20, bottom: 20, left:20};
@@ -43,6 +56,7 @@ const mapWidth = width1 - margin.left - margin.right;
 const mapHeight = height1 - margin.top - margin.bottom;
 const map = svg.append("g")
                 .attr("transform","translate("+margin.left+","+margin.top+")");
+let viewport = svg.append("g")
 
 const requestData = async function() {
 
@@ -50,31 +64,31 @@ const requestData = async function() {
   const world = await d3.json("/map");
   var volcanos = await d3.json("/volcanos")
   const events = await d3.json("/events")
-  var eruptions = await d3.json("/volcanos")
-  console.log(world)
-  console.log(volcanos)
-  console.log(events)
-  console.log(eruptions)
+  const eruptions = await d3.json("/eruptions")
 
 
 var countries = topojson.feature(world, world.objects.countries);
 var countriesMesh = topojson.mesh(world, world.objects.countries);
 var projection = d3.geoNaturalEarth1().fitSize([mapWidth, mapHeight], countries);
 var path = d3.geoPath().projection(projection);
-console.log(countriesMesh)
-
+//other possible alternative projections: geoAitoff  geoCylindricalStereographic geoEckert3 geoEquirectangular geoFahey
 var graticule = d3.geoGraticule10();
-map.append("path").attr("class", "graticule").attr("d", path(graticule))
 
-map.selectAll("path.country").data(countries.features)
+viewport.append("path").attr("class", "graticule").attr("d", path(graticule))
+
+viewport.selectAll("path.country").data(countries.features)
    .join("path")
    .attr("class", "country")
    .attr("note", d => d.id)
    .attr("d", path);
 
-map.append("path").datum(countriesMesh)
+viewport.append("path").datum(countriesMesh)
    .attr("class", "outline")
    .attr("d", path);
+
+viewport.append('path')
+   .attr('class', 'sphere')
+   .attr('d', path({type: 'Sphere'}))
 
 
 function updateVolcano(data) {
@@ -82,59 +96,133 @@ function updateVolcano(data) {
   data.forEach( d => {
           d.position = projection([d.longitude, d.latitude]);
         });
-  map.selectAll("circle.datapoint").data(data)
+
+  viewport.selectAll("circle.datapoint").data(data)
            .join("circle")
            .attr("class","datapoint")
-           .attr("fill", "orange")
+           .attr("fill", "#FF5733")
+           .attr("opacity", .4)
            .attr("r", 2)
            .attr("cx", d => d.position[0])
            .attr("cy", d => d.position[1]);
 }
-updateVolcano(eruptions);
+updateVolcano(volcanos);
+
+var zoom = d3.zoom()
+             .scaleExtent([1,10])
+             .on("zoom", mapZoomed);
+
+svg.call(zoom);
+svg.call(zoom.transform, d3.zoomIdentity);
+
+function mapZoomed({transform}) {
+
+viewport.attr("transform", transform,toString());
+
+viewport.select(".countriesMesh")
+            .style("stroke-width", 1 / transform.k);
+viewport.select(".graticule")
+            .style("stroke-width", 1.5 / transform.k);
+viewport.select(".circle.datapoint")
+        .attr("r", 2/ transform.k)
+}
+
+rec.append("rect")
+   .attr("x", "600")
+   .attr("y", "10")
+   .attr("width", "400")
+   .attr("height", "225")
+   .attr("fill", "none")
+   .attr("stroke", "#707070")
 
 
-let controls = d3.select("#controls")
+let toolTipWidth = 150;
+let toolTipHeight = 150;
 
-pop30km = controls.append("div")
-pop30km.append("p").text("population_within_30_km")
-     .append("input")
-     .attr("type","number")
-     .attr("class","pop30km")
-     .attr("param","pop30km");
+let toolTip = rec.append("g")
+                 .attr("class","tooltip")
+                 .attr("visibility","hiden");
 
-eruption_category = controls.append("div")
-eruption_category.append("p").text("Category")
-     .append("input")
-     .attr("type","text")
-     .attr("class","erCat")
-     .attr("param","erCat");
+let nameTxt = toolTip.append("text")
+                     .attr("text-anchor", "middle")
+                     .attr("alignment-baseline","hanging")
+                     .attr("x",800)
+                     .attr("y",30)
+                     .style("fill", "darkblue")
+                     .style("font-size", "18px");
+
+let countryTxt = toolTip.append("text")
+                 .attr("text-anchor", "middle")
+                 .attr("alignment-baseline","hanging")
+                 .attr("x",800)
+                 .attr("y",55)
+                 .style("fill", "Black")
+                 .style("font-size", "14px")
+                 .style("font-style","italic");
+
+let elevationTxt = toolTip.append("text")
+                .attr("text-anchor", "left")
+                .attr("alignment-baseline","hanging")
+                .attr("x",625)
+                .attr("y",85)
+                .style("fill", "#000000")
+                .style("font-size", "14px");
+
+let eruptionTxt = toolTip.append("text")
+                 .attr("text-anchor", "left")
+                 .attr("alignment-baseline","hanging")
+                 .attr("x",625)
+                 .attr("y",115)
+                 .style("fill", "#FF5733")
+                 .style("font-size", "14px");
+
+let km5Txt = toolTip.append("text")
+                .attr("text-anchor", "left")
+                .attr("alignment-baseline","hanging")
+                .attr("x",625)
+                .attr("y",145)
+                .style("fill", "#000000")
+                .style("font-size", "14px");
+
+let km10Txt = toolTip.append("text")
+                .attr("text-anchor", "left")
+                .attr("alignment-baseline","hanging")
+                .attr("x",625)
+                .attr("y",175)
+                .style("fill", "#000000")
+                .style("font-size", "14px");
 
 
-let button = controls.append("div")
-       .append("button")
-       .text("Update")
-       .on("click", function() {
+d3.selectAll("circle").on("mouseenter",mouseEntersPlot);
+d3.selectAll("circle").on("mouseout",mouseLeavesPlot);
 
-         let target = new URL("/volcanos", document.location);
-         // let target2 = new URL("/eruptions", document.location);
-         controls.selectAll("input").each( function() {
+function mouseEntersPlot(){
+  let volcano = d3.select(this);
+  volcano.attr("stroke", "black")
+         .attr('r',5)
+         .attr("stroke-width", 2);
 
-           let key = d3.select(this).attr("param");
-           let txt = d3.select(this).property("value");
-           if (txt.length > 0) {
-             target.searchParams.append(key, txt)
-           }
-         });
-         d3.json(target).then( data => {
-           volcanos = data;
-           updateVolcano(data);
+  countryTxt.text(volcano.datum().country);
+  elevationTxt.text("Elevation: " + volcano.datum().elevation + "m");
+  eruptionTxt.text("Last Erruption(AD): " + volcano.datum().last_eruption_year);
+  km5Txt.text("Pop within 5km: " + volcano.datum().population_within_5_km);
+  km10Txt.text("Pop within 10km: " + volcano.datum().population_within_10_km);
+  nameTxt.text(volcano.datum().volcano_name);
 
-         } );
+  toolTip.style("visibility","visible");
+}
 
-       });
+function mouseLeavesPlot(){
+  toolTip.style("visibility","hidden");
+  let volcano = d3.select(this);
+  volcano.attr('r',2)
+         .attr("stroke-width",0);
+}
+
 };
 
-requestData()
+
+requestData();
 </script>
 
 </body>
