@@ -31,90 +31,68 @@
     stroke-width: 1.5px;
     fill: none;
   }
-  .ticks {
-  font: 10px sans-serif;
-    }
-
-    .track,
-    .track-inset,
-    .track-overlay {
-      stroke-linecap: round;
-    }
-
-    .track {
-      stroke: #000;
-      stroke-opacity: 0.3;
-      stroke-width: 10px;
-    }
-
-    .track-inset {
-      stroke: #ddd;
-      stroke-width: 8px;
-    }
-
-    .track-overlay {
-      pointer-events: stroke;
-      stroke-width: 50px;
-      stroke: transparent;
-      cursor: crosshair;
-    }
-
-    .handle {
-      fill: #fff;
-      stroke: #000;
-      stroke-opacity: 0.5;
-      stroke-width: 1.25px;
-    }
+  #worldmap {
+    outline: 3px solid red;
+    border-left: 100px;
+    display: block;
+  }
+  #rectangle {
+    display: block;
+  }
+  .sliders {
+    display: block;
+  }
+  .sliders2 {
+    float: left;
+  }
+  #sliderGroup{
+    padding-top: 70px;
+    display:block;
+  }
   </style>
 
 </head>
 <body>
-<p> Hello! </p>
-<div class="labelradio">
-    <p> Population within 100km </p>
+<div id=sliderGroup>
+  <svg id="slider1" class="sliders2" height="100" width = "400" style="background:grey;" ></svg>
+  <svg id="slider2" class="sliders" height="100" width = "400" style="background:grey;" ></svg>
+  <svg id="slider3" class="sliders2" height="100" width = "400" style="background:grey;" ></svg>
+  <svg id="slider4" class="sliders2" height="100" width = "400" style="background:grey;" ></svg>
 </div>
-<div>
-  <input type="radio" name="pop100km" value=1000> 1,000 <br>
-  <input type="radio" name="pop100km" value=1000000> 100,000 <br>
-  <input type="radio" name="pop100km" value=10000000> 1,000,000 <br>
-  <input type="radio" name="pop100km" value=100000000> 10,000,000 <br>
+<svg id="rectangle" height="200" width="225" ></svg>
 
-</div>
-<div>
-<input type="range" id="time" name="time" min=-6000 max=2017 value=10>
-</div>
+<svg id="worldmap" height="600" width="1000" style="background:#ffffff;" ></svg>
 
-<div id="controls">
-</div>
-<svg id="rectangle" height="250" width="1800" >
-</svg>
-<svg id="worldmap" height="600" width="1000" style="background:#ffffff; "  >
 
-</svg>
-
-<div id="scatterLegend" class="legend"> </div>
 
 <script id="map">
 
+const slider1 = d3.select("#slider1");
+const slider2 = d3.select("#slider2");
+const slider3 = d3.select("#slider3");
+const slider4 = d3.select("#slider4");
+
 const svg = d3.select("#worldmap");
-const rec = d3.select("#rectangle")
+
+const rec = d3.select("#rectangle");
+
 const width1 = svg.attr("width");
 const height1 = svg.attr("height");
 const margin = { top: 20, right: 20, bottom: 20, left:20};
 const mapWidth = width1 - margin.left - margin.right;
 const mapHeight = height1 - margin.top - margin.bottom;
+const sliderHeight = slider1.attr("height")-20;
+const sliderWidth = slider1.attr("width")-20;
 const map = svg.append("g")
                 .attr("transform","translate("+margin.left+","+margin.top+")");
-let viewport = svg.append("g")
+let viewport = svg.append("g");
+let controls = svg.append("g").attr("class", "contols");
 
 const requestData = async function() {
 
-  // const world = await d3.json("datasets/countries-50m.json");
-  const world = await d3.json("/map");
-  var volcanos = await d3.json("/volcanos")
-  const events = await d3.json("/events")
-  const eruptions = await d3.json("/eruptions")
-
+// const world = await d3.json("datasets/countries-50m.json");
+const world = await d3.json("/map");
+const volcanos = await d3.json("/volcanos")
 
 var countries = topojson.feature(world, world.objects.countries);
 var countriesMesh = topojson.mesh(world, world.objects.countries);
@@ -137,16 +115,29 @@ viewport.append("path").datum(countriesMesh)
 
 viewport.append('path')
    .attr('class', 'sphere')
-   .attr('d', path({type: 'Sphere'}))
+   .attr('d', path({type: 'Sphere'}));
 
+var filters = {};
+
+function passesFilter (point) {
+
+ let stillPassed = true;
+ Object.values(filters).forEach( filterFunc => {
+   stillPassed = filterFunc(point) && stillPassed;
+ });
+ return stillPassed;
+
+}
 
 function updateVolcano(data) {
+  //filter the points
+  let filteredData = data.filter(d => passesFilter(d));
 
-  data.forEach( d => {
-          d.position = projection([d.longitude, d.latitude]);
-        });
+  filteredData.forEach( d => {
+    d.position = projection([d.longitude, d.latitude]);
+  });
 
-  viewport.selectAll("circle.datapoint").data(data)
+  viewport.selectAll("circle.datapoint").data(filteredData)
            .join("circle")
            .attr("class","datapoint")
            .attr("fill", "#FF5733")
@@ -157,69 +148,6 @@ function updateVolcano(data) {
 }
 updateVolcano(volcanos);
 
-     d3.selectAll("input[name='pop100km']").on("change", function(){
-         console.log(this.value)
-         let target = new URL("/volcanos", document.location);
-         // let target2 = new URL("/eruptions", document.location);
-
-
-           let key = d3.select(this).attr("name");
-           let txt = d3.select(this).property("value");
-           if (txt.length > 0) {
-             target.searchParams.append(key, txt)
-           }
-         d3.json(target).then( data => {
-           volcanos = data;
-           console.log(volcanos);
-           updateVolcano(data);
-
-         } );
-     });
-
-     d3.select("#time").on("change", function(d){
-       console.log(this.value)
-       selectedValue = this.value
-       let target = new URL("/volcanos", document.location);
-       // let target2 = new URL("/eruptions", document.location);
-
-
-         let key = d3.select(this).attr("name");
-         let txt = d3.select(this).property("value");
-         if (txt.length > 0) {
-           target.searchParams.append(key, txt)
-         }
-       d3.json(target).then( data => {
-         volcanos = data;
-         console.log(volcanos);
-         updateVolcano(data);
-
-       } );
-  });
-  
-// let button = controls.append("div")
-//        .append("button")
-//        .text("Update")
-//        .on("click", function() {
-//
-//          let target = new URL("/volcanos", document.location);
-//          // let target2 = new URL("/eruptions", document.location);
-//          controls.selectAll("input").each( function() {
-//
-//            let key = d3.select(this).attr("param");
-//            let txt = d3.select(this).property("value");
-//            if (txt.length > 0) {
-//              target.searchParams.append(key, txt)
-//            }
-//          });
-//          d3.json(target).then( data => {
-//            volcanos = data;
-//            console.log(volcanos);
-//            updateVolcano(data);
-//
-//          } );
-//
-//        });
-
 var zoom = d3.zoom()
              .scaleExtent([1,10])
              .on("zoom", mapZoomed);
@@ -229,23 +157,24 @@ svg.call(zoom.transform, d3.zoomIdentity);
 
 function mapZoomed({transform}) {
 
-viewport.attr("transform", transform,toString());
+  viewport.attr("transform", transform,toString());
 
-viewport.select(".countriesMesh")
-            .style("stroke-width", 1 / transform.k);
-viewport.select(".graticule")
-            .style("stroke-width", 1.5 / transform.k);
-viewport.select(".circle.datapoint")
-        .attr("r", 2/ transform.k)
+  viewport.select(".countriesMesh")
+              .style("stroke-width", 1 / transform.k);
+  viewport.select(".graticule")
+              .style("stroke-width", 1.5 / transform.k);
+  viewport.select(".circle.datapoint")
+          .attr("r", 2/ transform.k)
 }
 
 rec.append("rect")
-   .attr("x", "600")
-   .attr("y", "10")
-   .attr("width", "400")
+   .attr("x", "0")
+   .attr("y", "0")
+   .attr("width", "200")
    .attr("height", "225")
    .attr("fill", "none")
    .attr("stroke", "#707070")
+   .style("display", "inline")
 
 
 let toolTipWidth = 150;
@@ -258,51 +187,121 @@ let toolTip = rec.append("g")
 let nameTxt = toolTip.append("text")
                      .attr("text-anchor", "middle")
                      .attr("alignment-baseline","hanging")
-                     .attr("x",800)
+                     .attr("x",700)
                      .attr("y",30)
                      .style("fill", "darkblue")
                      .style("font-size", "18px");
 
 let countryTxt = toolTip.append("text")
-                 .attr("text-anchor", "middle")
-                 .attr("alignment-baseline","hanging")
-                 .attr("x",800)
-                 .attr("y",55)
-                 .style("fill", "Black")
-                 .style("font-size", "14px")
-                 .style("font-style","italic");
+                        .attr("text-anchor", "middle")
+                        .attr("alignment-baseline","hanging")
+                        .attr("x",700)
+                        .attr("y",55)
+                        .style("fill", "Black")
+                        .style("font-size", "14px")
+                        .style("font-style","italic");
 
 let elevationTxt = toolTip.append("text")
-                .attr("text-anchor", "left")
-                .attr("alignment-baseline","hanging")
-                .attr("x",625)
-                .attr("y",85)
-                .style("fill", "#000000")
-                .style("font-size", "14px");
+                          .attr("text-anchor", "left")
+                          .attr("alignment-baseline","hanging")
+                          .attr("x",625)
+                          .attr("y",85)
+                          .style("fill", "#000000")
+                          .style("font-size", "14px");
 
 let eruptionTxt = toolTip.append("text")
-                 .attr("text-anchor", "left")
-                 .attr("alignment-baseline","hanging")
-                 .attr("x",625)
-                 .attr("y",115)
-                 .style("fill", "#FF5733")
-                 .style("font-size", "14px");
+                         .attr("text-anchor", "left")
+                         .attr("alignment-baseline","hanging")
+                         .attr("x",625)
+                         .attr("y",115)
+                         .style("fill", "#FF5733")
+                         .style("font-size", "14px");
 
 let km5Txt = toolTip.append("text")
-                .attr("text-anchor", "left")
-                .attr("alignment-baseline","hanging")
-                .attr("x",625)
-                .attr("y",145)
-                .style("fill", "#000000")
-                .style("font-size", "14px");
+                    .attr("text-anchor", "left")
+                    .attr("alignment-baseline","hanging")
+                    .attr("x",625)
+                    .attr("y",145)
+                    .style("fill", "#000000")
+                    .style("font-size", "14px");
 
 let km10Txt = toolTip.append("text")
-                .attr("text-anchor", "left")
-                .attr("alignment-baseline","hanging")
-                .attr("x",625)
-                .attr("y",175)
-                .style("fill", "#000000")
-                .style("font-size", "14px");
+                    .attr("text-anchor", "left")
+                    .attr("alignment-baseline","hanging")
+                    .attr("x",625)
+                    .attr("y",175)
+                    .style("fill", "#000000")
+                    .style("font-size", "14px");
+
+//sliders
+function makeSlider(container, label, attribute, sliderWidth, sliderHeight) {
+
+  let values = volcanos.map(d => d[attribute]);
+  values = values.map(Number);
+  let minMax = d3.extent(values);
+
+  if (label === "Population Within 5km: " || label === "Population Within 10km: ") {
+    minMax[1] = 80000;
+  }
+  if (label === "Date of Last Erruption(AD): ") { minMax[0] = -2000}
+
+  let xScale = d3.scaleLinear().domain(minMax).range([10,sliderWidth-10]);
+  let xAxis = d3.axisBottom(xScale);
+  let wrapper = container.append("text").text(label)
+                                        .attr("class", "control")
+                                        .attr("stroke", "blue")
+                                        .attr("x", 40)
+                                        .attr("y", 20);
+  let areaLayer = container.append("g");
+  areaLayer.append("g").attr("transform",`translate(1,${sliderHeight-30})`)
+                  .call(xAxis);
+
+  let numBins = 20;
+  let histoGen = d3.histogram().domain(minMax).thresholds(numBins);
+
+  let counts = histoGen(values);
+  counts.unshift( {x0: 0,
+                   x1: counts[0].x0,
+                   length: counts[0].length});
+  let yScale = d3.scaleLinear().domain(d3.extent(counts, d => d.length))
+                      .range([sliderHeight-30,10]);
+  let area = d3.area().x( d => xScale(d.x1) )
+               .y0(yScale(0))
+               .y1(d => yScale(d.length))
+               .curve(d3.curveNatural);
+
+  areaLayer.append("path").datum(counts)
+           .attr("class", "area")
+           .attr("d", area);
+
+  var brush = d3.brushX().extent([[10,0],[sliderWidth-10,sliderHeight]])
+                         .on("brush end", brushMoved);
+
+  function brushMoved(event) {
+    if (event.selection !== null) {
+      // brush exists
+
+      let start = xScale.invert(event.selection[0]);
+      let end = xScale.invert(event.selection[1]);
+      let filterFunc = d => d[attribute] >= start && d[attribute] <= end;
+      filters[attribute] = filterFunc;
+      updateVolcano(volcanos);
+    }
+    else {
+      // brush was just cleared
+      let filterFunc = d => true;
+      filters[attribute] = filterFunc;
+      updateVolcano(volcanos);
+    }
+  }
+  areaLayer.append("g").attr("class","brush").call(brush);
+
+}
+
+makeSlider(slider1, "Elevation: ", "elevation", sliderWidth, sliderHeight);
+makeSlider(slider2, "Date of Last Erruption(AD): ", "last_eruption_year", sliderWidth, sliderHeight);
+makeSlider(slider3, "Population Within 5km: ", "population_within_5_km", sliderWidth,sliderHeight);
+makeSlider(slider4, "Population Within 10km: ", "population_within_10_km", sliderWidth, sliderHeight);
 
 
 d3.selectAll("circle").on("mouseenter",mouseEntersPlot);
