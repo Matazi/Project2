@@ -32,15 +32,17 @@
     fill: none;
   }
   #worldmap {
-    outline: 3px solid red;
+    outline: 2px solid red;
     border-left: 100px;
+    padding-left: 20px;
     display: block;
   }
   #rectangle {
-    display: none;
+    display: inline;
+    padding-left: 120px;
   }
   .sliders {
-    display: inline;
+    display: block;
   }
   .sliders2 {
     float: left;
@@ -60,6 +62,9 @@
     font-weight:bold;
     font-style:italic;
   }
+  p#name {
+    font-weight:normal;
+  }
   div#mapp {
     padding-left: 120px;
     padding-top:10px;
@@ -73,7 +78,7 @@
 </head>
 <body>
 <h1> Volcanos of the World </h1>
-<svg id="rectangle" height="200" width="225" ></svg>
+<svg id="rectangle" height="80" width="1000" ></svg>
 <div id="mapp">
 <svg id="worldmap" height="600" width="1000" style="background:#ffffff;" ></svg>
 </div>
@@ -191,10 +196,10 @@ function mapZoomed({transform}) {
 rec.append("rect")
    .attr("x", "0")
    .attr("y", "0")
-   .attr("width", "200")
-   .attr("height", "225")
+   .attr("id","rectangle")
+   .attr("width", "1000")
+   .attr("height", "80")
    .attr("fill", "none")
-   .attr("stroke", "#707070")
    .style("display", "inline")
 
 
@@ -206,51 +211,51 @@ let toolTip = rec.append("g")
                  .attr("visibility","hiden");
 
 let nameTxt = toolTip.append("text")
-                     .attr("text-anchor", "left")
+                     .attr("text-anchor", "middle")
                      .attr("alignment-baseline","hanging")
-                     .attr("x",10)
-                     .attr("y",30)
+                     .attr("x",500)
+                     .attr("y",10)
                      .style("fill", "darkblue")
-                     .style("font-size", "18px");
+                     .style("font-size", "18px")
 
 let countryTxt = toolTip.append("text")
-                        .attr("text-anchor", "left")
+                        .attr("text-anchor", "middle")
                         .attr("alignment-baseline","hanging")
-                        .attr("x",10)
-                        .attr("y",55)
+                        .attr("x",500)
+                        .attr("y",30)
                         .style("fill", "Black")
                         .style("font-size", "14px")
                         .style("font-style","italic");
 
 let elevationTxt = toolTip.append("text")
-                          .attr("text-anchor", "left")
+                          .attr("text-anchor", "middle")
                           .attr("alignment-baseline","hanging")
-                          .attr("x",10)
-                          .attr("y",85)
+                          .attr("x",200)
+                          .attr("y",55)
                           .style("fill", "#000000")
                           .style("font-size", "14px");
 
 let eruptionTxt = toolTip.append("text")
-                         .attr("text-anchor", "left")
+                         .attr("text-anchor", "middle")
                          .attr("alignment-baseline","hanging")
-                         .attr("x",10)
-                         .attr("y",115)
+                         .attr("x",400)
+                         .attr("y",55)
                          .style("fill", "#FF5733")
                          .style("font-size", "14px");
 
 let km5Txt = toolTip.append("text")
-                    .attr("text-anchor", "left")
+                    .attr("text-anchor", "middle")
                     .attr("alignment-baseline","hanging")
-                    .attr("x",10)
-                    .attr("y",145)
+                    .attr("x",600)
+                    .attr("y",55)
                     .style("fill", "#000000")
                     .style("font-size", "14px");
 
 let km10Txt = toolTip.append("text")
-                    .attr("text-anchor", "left")
+                    .attr("text-anchor", "middle")
                     .attr("alignment-baseline","hanging")
-                    .attr("x",10)
-                    .attr("y",175)
+                    .attr("x",800)
+                    .attr("y",55)
                     .style("fill", "#000000")
                     .style("font-size", "14px");
 
@@ -331,6 +336,13 @@ makeSlider(slider4, "Population Within 10km", "population_within_10_km", sliderW
 d3.selectAll("circle").on("mouseenter",mouseEntersPlot);
 d3.selectAll("circle").on("mouseout",mouseLeavesPlot);
 
+countryTxt.text("Country");
+elevationTxt.text("Elevation");
+eruptionTxt.text("Last Erruption(AD)");
+km5Txt.text("Pop within 5km");
+km10Txt.text("Pop within 10km");
+nameTxt.text("Volcano Name");
+
 function mouseEntersPlot(){
   let volcano = d3.select(this);
   volcano.attr("stroke", "black")
@@ -347,8 +359,8 @@ function mouseEntersPlot(){
   toolTip.style("visibility","visible");
 }
 
+
 function mouseLeavesPlot(){
-  toolTip.style("visibility","hidden");
   let volcano = d3.select(this);
   volcano.attr('r',2)
          .attr("stroke-width",0);
