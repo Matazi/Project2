@@ -37,7 +37,7 @@
     display: block;
   }
   #rectangle {
-    display: block;
+    display: none;
   }
   .sliders {
     display: block;
@@ -45,25 +45,46 @@
   .sliders2 {
     float: left;
   }
-  #sliderGroup{
-    padding-top: 70px;
-    display:block;
+  div#sliderGroup{
+    display:inline-block;
+    padding-left: 225px;
+    padding-bottom: 20px;
+  }
+  h1 {
+    text-align:center;
+    color:#FF5733;
+    padding-top: 20px;
+  }
+  p {
+    text-align:center;
+    font-weight:bold;
+    font-style:italic;
+  }
+  div#mapp {
+    padding-left: 120px;
+    padding-top:10px;
+    padding-bottom: 20px;
+  }
+  p#space {
+    margin-top: 20px;
+    display: block;
   }
   </style>
-
 </head>
 <body>
-<div id=sliderGroup>
-  <svg id="slider1" class="sliders2" height="100" width = "400" style="background:grey;" ></svg>
-  <svg id="slider2" class="sliders" height="100" width = "400" style="background:grey;" ></svg>
-  <svg id="slider3" class="sliders2" height="100" width = "400" style="background:grey;" ></svg>
-  <svg id="slider4" class="sliders2" height="100" width = "400" style="background:grey;" ></svg>
-</div>
+<h1> Volcanos of the World </h1>
 <svg id="rectangle" height="200" width="225" ></svg>
-
+<div id="mapp">
 <svg id="worldmap" height="600" width="1000" style="background:#ffffff;" ></svg>
-
-
+</div>
+<p> <i> Click on histograms and drag to filter the graph data. Click away from box to clear filter. </i> </p>
+<div id=sliderGroup>
+  <svg id="slider1" class="sliders2" height="100" width = "400" style="background:lightgrey;" ></svg>
+  <svg id="slider2" class="sliders" height="100" width = "400" style="background:lightgrey;" ></svg>
+  <svg id="slider3" class="sliders2" height="100" width = "400" style="background:lightgrey;" ></svg>
+  <svg id="slider4" class="sliders2" height="100" width = "400" style="background:lightgrey;" ></svg>
+</div>
+<p id="name"> Created by: Chris Tedeschi,  </p>
 
 <script id="map">
 
@@ -240,19 +261,22 @@ function makeSlider(container, label, attribute, sliderWidth, sliderHeight) {
   values = values.map(Number);
   let minMax = d3.extent(values);
 
-  if (label === "Population Within 5km: " || label === "Population Within 10km: ") {
+  if (label === "Population Within 5km" || label === "Population Within 10km") {
     minMax[1] = 80000;
   }
-  if (label === "Date of Last Erruption(AD): ") { minMax[0] = -2000}
+  if (label === "Date of Last Erruption(AD)") { minMax[0] = -2000}
 
   let xScale = d3.scaleLinear().domain(minMax).range([10,sliderWidth-10]);
   let xAxis = d3.axisBottom(xScale);
   let wrapper = container.append("text").text(label)
                                         .attr("class", "control")
-                                        .attr("stroke", "blue")
-                                        .attr("x", 40)
-                                        .attr("y", 20);
-  let areaLayer = container.append("g");
+                                        .attr("stroke", "black")
+                                        .attr("text-anchor", "middle")
+                                        .attr("x", sliderWidth/2+5)
+                                        .attr("y", sliderHeight+5);
+  let areaLayer = container.append("g")
+                           .attr("class","areaLayer")
+                           .style("fill", "#FF5733");
   areaLayer.append("g").attr("transform",`translate(1,${sliderHeight-30})`)
                   .call(xAxis);
 
@@ -298,10 +322,10 @@ function makeSlider(container, label, attribute, sliderWidth, sliderHeight) {
 
 }
 
-makeSlider(slider1, "Elevation: ", "elevation", sliderWidth, sliderHeight);
-makeSlider(slider2, "Date of Last Erruption(AD): ", "last_eruption_year", sliderWidth, sliderHeight);
-makeSlider(slider3, "Population Within 5km: ", "population_within_5_km", sliderWidth,sliderHeight);
-makeSlider(slider4, "Population Within 10km: ", "population_within_10_km", sliderWidth, sliderHeight);
+makeSlider(slider1, "Elevation", "elevation", sliderWidth, sliderHeight);
+makeSlider(slider2, "Date of Last Erruption(AD)", "last_eruption_year", sliderWidth, sliderHeight);
+makeSlider(slider3, "Population Within 5km", "population_within_5_km", sliderWidth,sliderHeight);
+makeSlider(slider4, "Population Within 10km", "population_within_10_km", sliderWidth, sliderHeight);
 
 
 d3.selectAll("circle").on("mouseenter",mouseEntersPlot);
