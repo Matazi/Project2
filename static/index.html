@@ -34,7 +34,7 @@
   #worldmap {
     outline: 2px solid red;
     border-left: 100px;
-    padding-left: 20px;
+    padding-left: 1px;
     display: block;
   }
   #rectangle {
@@ -123,7 +123,7 @@ const volcanos = await d3.json("/volcanos")
 
 var countries = topojson.feature(world, world.objects.countries);
 var countriesMesh = topojson.mesh(world, world.objects.countries);
-var projection = d3.geoNaturalEarth1().fitSize([mapWidth, mapHeight], countries);
+var projection = d3.geoNaturalEarth1().fitSize([mapWidth , mapHeight + 30], countries);
 var path = d3.geoPath().projection(projection);
 //other possible alternative projections: geoAitoff  geoCylindricalStereographic geoEckert3 geoEquirectangular geoFahey
 var graticule = d3.geoGraticule10();
@@ -168,7 +168,7 @@ function updateVolcano(data) {
            .join("circle")
            .attr("class","datapoint")
            .attr("fill", "#FF5733")
-           .attr("opacity", .4)
+           .attr("opacity", .5)
            .attr("r", 2)
            .attr("cx", d => d.position[0])
            .attr("cy", d => d.position[1]);
@@ -176,7 +176,7 @@ function updateVolcano(data) {
 updateVolcano(volcanos);
 
 var zoom = d3.zoom()
-             .scaleExtent([1,10])
+             .scaleExtent([1,20])
              .on("zoom", mapZoomed);
 
 svg.call(zoom);
@@ -186,12 +186,35 @@ function mapZoomed({transform}) {
 
   viewport.attr("transform", transform,toString());
 
-  viewport.select(".countriesMesh")
+  viewport.select(".outline")
               .style("stroke-width", 1 / transform.k);
   viewport.select(".graticule")
               .style("stroke-width", 1.5 / transform.k);
-  viewport.select(".circle.datapoint")
-          .attr("r", 2/ transform.k)
+  viewport.selectAll("circle.datapoint")
+          .attr("r", 3/ transform.k)
+
+  function mouseEntersPlot(){
+          let volcano = d3.select(this);
+          volcano.attr("stroke", "black")
+                 .attr('r',5/transform.k)
+                 .attr("stroke-width", 2/transform.k);
+                 countryTxt.text(volcano.datum().country);
+                 elevationTxt.text("Elevation: " + volcano.datum().elevation + "m");
+                 eruptionTxt.text("Last Erruption(AD): " + volcano.datum().last_eruption_year);
+                 km5Txt.text("Pop within 5km: " + volcano.datum().population_within_5_km);
+                 km10Txt.text("Pop within 10km: " + volcano.datum().population_within_10_km);
+                 nameTxt.text(volcano.datum().volcano_name);
+
+                 toolTip.style("visibility","visible");}
+
+function mouseLeavesPlot(){
+  toolTip.style("visibility","hidden");
+  let volcano = d3.select(this);
+  volcano.attr('r',3/transform.k)
+         .attr("stroke-width",0);
+}
+d3.selectAll("circle").on("mouseenter",mouseEntersPlot);
+d3.selectAll("circle").on("mouseout",mouseLeavesPlot);
 }
 
 rec.append("rect")
@@ -259,6 +282,7 @@ let km10Txt = toolTip.append("text")
                     .attr("y",55)
                     .style("fill", "#000000")
                     .style("font-size", "14px");
+
 
 //sliders
 function makeSlider(container, label, attribute, sliderWidth, sliderHeight) {
@@ -334,9 +358,9 @@ makeSlider(slider3, "Population Within 5km", "population_within_5_km", sliderWid
 makeSlider(slider4, "Population Within 10km", "population_within_10_km", sliderWidth, sliderHeight);
 
 
-d3.selectAll("circle").on("mouseenter",mouseEntersPlot);
-d3.selectAll("circle").on("mouseout",mouseLeavesPlot);
-
+// d3.selectAll("circle").on("mouseenter",mouseEntersPlot);
+// d3.selectAll("circle").on("mouseout",mouseLeavesPlot);
+//
 countryTxt.text("Country");
 elevationTxt.text("Elevation");
 eruptionTxt.text("Last Erruption(AD)");
@@ -344,28 +368,28 @@ km5Txt.text("Pop within 5km");
 km10Txt.text("Pop within 10km");
 nameTxt.text("Volcano Name");
 
-function mouseEntersPlot(){
-  let volcano = d3.select(this);
-  volcano.attr("stroke", "black")
-         .attr('r',5)
-         .attr("stroke-width", 2);
-
-  countryTxt.text(volcano.datum().country);
-  elevationTxt.text("Elevation: " + volcano.datum().elevation + "m");
-  eruptionTxt.text("Last Erruption(AD): " + volcano.datum().last_eruption_year);
-  km5Txt.text("Pop within 5km: " + volcano.datum().population_within_5_km);
-  km10Txt.text("Pop within 10km: " + volcano.datum().population_within_10_km);
-  nameTxt.text(volcano.datum().volcano_name);
-
-  toolTip.style("visibility","visible");
-}
-
-
-function mouseLeavesPlot(){
-  let volcano = d3.select(this);
-  volcano.attr('r',2)
-         .attr("stroke-width",0);
-}
+// function mouseEntersPlot(){
+//   let volcano = d3.select(this);
+//   volcano.attr("stroke", "black")
+//          .attr('r',5)
+//          .attr("stroke-width", 2);
+//
+//   countryTxt.text(volcano.datum().country);
+//   elevationTxt.text("Elevation: " + volcano.datum().elevation + "m");
+//   eruptionTxt.text("Last Erruption(AD): " + volcano.datum().last_eruption_year);
+//   km5Txt.text("Pop within 5km: " + volcano.datum().population_within_5_km);
+//   km10Txt.text("Pop within 10km: " + volcano.datum().population_within_10_km);
+//   nameTxt.text(volcano.datum().volcano_name);
+//
+//   toolTip.style("visibility","visible");
+// }
+//
+//
+// function mouseLeavesPlot(){
+//   let volcano = d3.select(this);
+//   volcano.attr('r',2)
+//          .attr("stroke-width",0);
+// }
 
 };
 
